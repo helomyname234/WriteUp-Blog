@@ -1,0 +1,17 @@
+# Kiến trúc build
+site/
+
+# Python rác
+__pycache__/
+*.py[cod]
+*$py.class
+.cache/
+
+# Hệ thống
+.DS_Store
+Thumbs.db
+
+# File tạm
+.vsc/
+.idea/
+./HUONG_DAN.md

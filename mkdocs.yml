@@ -1,0 +1,62 @@
+site_name: "HiW7n | CTF Writeups"
+site_author: "HiW7n"
+site_description: "Phòng lab và bài viết giải các thử thách CTF từ OverTheWire, picoCTF, và nhiều nền tảng khác."
+
+theme:
+  name: material
+  custom_dir: overrides
+  palette:
+    # Set dark mode (slate) as default
+    - scheme: slate
+      primary: blue grey
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: blue grey
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  personal:
+    name: "HiW7n"
+    bio: "Đam mê học hỏi về Cybersecurity, CTF Player & Lab Explorer. Đây là nơi mình ghi lại hành trình chinh phục các thử thách bảo mật."
+    avatar: assets/images/avatar.png
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Trang chủ: index.md
+  - CTF Platforms:
+    - OverTheWire: 
+      - Bandit Level 0: ctf/overthewire/bandit-0.md
+      - Overview: ctf/overthewire/index.md
+    - picoCTF: ctf/picoctf/index.md
+    - CyberDefender: ctf/cyberdefender/index.md
+  - Labs:
+    - Overview: labs/index.md
+  - About: about.md
+
+copyright: Copyright &copy; 2026 HiW7n

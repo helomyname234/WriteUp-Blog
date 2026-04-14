@@ -1,0 +1,18 @@
+{% import "partials/nav-item.html" as item with context %}
+
+{# Personal Profile Section #}
+<div class="personal-profile">
+  <img src="{{ config.extra.personal.avatar | url }}" class="personal-avatar" alt="avatar">
+  <div class="personal-name">{{ config.extra.personal.name }}</div>
+  <div class="personal-bio">{{ config.extra.personal.bio }}</div>
+</div>
+
+<nav class="md-nav md-nav--primary" aria-label="{{ lang.t('nav') }}" data-md-level="0">
+  {# Removed discrete logo/title from here to focus on profile #}
+  <ul class="md-nav__list" data-md-scrollfix>
+    {% for nav_item in nav.items %}
+      {% set path = "__nav_" ~ loop.index %}
+      {{ item.render(nav_item, path, 1) }}
+    {% endfor %}
+  </ul>
+</nav>
