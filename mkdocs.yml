@@ -52,6 +52,7 @@ nav:
   - CTF Platforms:
     - OverTheWire: 
       - Bandit Level 0: ctf/overthewire/bandit-0.md
+      - Bandit Level 1: ctf/overthewire/bandit-1.md
       - Overview: ctf/overthewire/index.md
     - picoCTF: ctf/picoctf/index.md
     - CyberDefender: ctf/cyberdefender/index.md
