@@ -54,6 +54,7 @@ nav:
       - Bandit Level 0: ctf/overthewire/bandit-0.md
       - Bandit Level 1: ctf/overthewire/bandit-1.md
       - Bandit Level 2: ctf/overthewire/bandit-2.md
+      - Bandit Level 3: ctf/overthewire/bandit-3.md
       - Overview: ctf/overthewire/index.md
     - picoCTF: ctf/picoctf/index.md
     - CyberDefender: ctf/cyberdefender/index.md
