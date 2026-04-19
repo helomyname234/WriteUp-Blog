@@ -56,6 +56,8 @@ nav:
       - Bandit Level 2: ctf/overthewire/bandit-2.md
       - Bandit Level 3: ctf/overthewire/bandit-3.md
       - Overview: ctf/overthewire/index.md
+    - BoilersCTF:
+      - Gas Giant: ctf/boilers/gas-giant.md
     - picoCTF: ctf/picoctf/index.md
     - CyberDefender: ctf/cyberdefender/index.md
   - Labs:
