@@ -58,6 +58,7 @@ nav:
       - Overview: ctf/overthewire/index.md
     - BoilersCTF:
       - Gas Giant: ctf/boilers/gas-giant.md
+      - YAML Validator: ctf/boilers/yml.md
     - picoCTF: ctf/picoctf/index.md
     - CyberDefender: ctf/cyberdefender/index.md
   - Labs:
