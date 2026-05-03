@@ -1,5 +1,5 @@
 
-# [Write-up] CTF Challenge: YAML Validator (Prefect RCE)
+# CTF Challenge: YAML Validator - b01lers CTF
 
 ## 1. Tổng quan bài toán
 Bài toán cung cấp một dịch vụ web cho phép người dùng upload các file `.yml` và sau đó thực hiện "Validate" chúng. 

@@ -1,25 +1,113 @@
 
 
-# CTF Writeup: Gas Giant (Web/Client-side)
+# Gas Giant (Web/Client-side) - b01lers CTF
 
 ## 1. Challenge Description
-Bài toán cung cấp một trình giả lập Jupyter Notebook rút gọn chạy bằng **Pyodide** (Python thực thi trong trình duyệt thông qua WebAssembly). Người dùng có thể upload file `.ipynb`, chia sẻ link và gửi URL cho một con bot (Puppeteer) để kiểm tra. Mục tiêu là lấy được giá trị của cookie `flag` được set trong trình duyệt của bot.
+Website giả lập Jupyter Notebook rút gọn chạy bằng **Pyodide** (Python thực thi trong trình duyệt thông qua WebAssembly). 
+Người dùng có thể upload file notebook và trang web sinh ra link notebook để chạy 
+Trang web còn có chức năng cho phép người dùng báo cáo link độc hại cho admin 
 
 ![Gas_Page](../../assets/images/ctf/b01lers/gas_page.png)
 
 
 ## 2. Vulnerability Analysis
+Phân tích mã nguồn chúng ta thấy có file bot.js, điều này gợi ý có thể sẽ có lỗ hỗng XSS của trang web 
+Phân tích mã nguồn bot.js
+```javascript
+export async function visit(url: string) {
+    const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-gpu', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
 
-### Frontend (React)
-Kiểm tra mã nguồn frontend tại component `CodeCellOutput`, ta phát hiện lỗi XSS cơ bản thông qua việc sử dụng thuộc tính `dangerouslySetInnerHTML` để hiển thị kết quả HTML từ các cell của notebook:
+    await browser.setCookie({ name: 'flag', value: 'bctf{fake_flag}', domain: 'localhost' });
+
+    console.log('Visiting:', url);
+
+    await page.goto(url);
+
+    // Wait for the run button to load, then run the cell
+    await page.locator('button.cursor-pointer.text-right.px-1').setTimeout(20000).click();
+    await sleep(5000);
+
+    console.log('Done visiting :D')
+}
+```
+Con bot này sẽ chỉ set flag cookie chỉ khi nó truy cập đường dẫn URL từ domain localhost, sau khi truy cập nó sẽ tìm kiếm class `cursor-pointer text-right px-1` và click vào đó
+
+Kiểm tra trong mã html và css, phát hiện được đây là class của nút run cell
+
+```typescript
+export default function StyledNotebook(props: { notebook: Notebook, className: string }) {
+    return (
+        <JupyterNotebook
+            notebook={props.notebook}
+            remarkPlugins={[remarkMath]}
+            ...
+            runButtonClassName="cursor-pointer text-right px-1"
+        />
+    )
+}
+```
+
+Kiểm tra chức năng upload notebook, ta thấy có thể upload file notebook lên và trang web sẽ trả về link của notebook đó, kết hợp với manh mối về bot, có thể suy luận được tồn tại lỗ hỗng XSS khi thực thi code trong cell 
+
+Kiểm tra thêm chức năng report link của web, trong mã nguồn, ta thấy nó gọi tới API /report 
+
+```javascript
+ const res = await fetch('/report', {
+                        method: 'POST',
+                        body: JSON.stringify({ url }),
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        setMessage(data.message);
+                        setError('');
+                    } else {
+                        setError(data.message);
+                        setMessage('');
+                    }
+
+```
+API này sẽ gọi con bot truy cập vào đường link đã nhận từ người dùng 
+
+```typescript
+import { visit } from './bot.js';
+...
+app.post('/report', async (req, res) => {
+    ...
+    void visit(url).catch((e) => console.log('Visit failed:', e));
+    res.status(200).send({ message: 'The admin is visiting your URL.' })
+})
+    ...
+```
+Đoán được chuỗi tấn công có thể sẽ xảy ra như sau: Khai thác lỗ hỗng XSS từ Cell của notebook -> Upload Notebook chứa 1 cell duy nhất có đoạn mã thực thi việc gửi flag về server của attacker -> Lấy link notebook -> Report link cho admin -> Bot truy cập vào link -> Lấy flag từ server 
+
+Câu hỏi đặt ra bây giờ là làm sao để tìm kiếm lỗ hỗng XSS của cell trong notebook và khai thác như thế nào ?
+
+Kiểm tra mã nguồn frontend tại component `CodeCellOutput`, ta phát hiện lỗi XSS thông qua việc sử dụng thuộc tính `dangerouslySetInnerHTML` để hiển thị kết quả HTML từ các cell của notebook:
 
 ```javascript
 if (trusted && mimes['text/html']) return (
     <div dangerouslySetInnerHTML={{ __html: mimes['text/html'] }} />
 )
 ```
+Ở đây có sử dụng biến trusted để kiểm tra tính an toàn của nội dung HTML, nếu trusted là true thì sẽ hiển thị nội dung HTML, ngược lại thì sẽ không hiển thị, tuy nhiên website lại để giá trị mặc định cho trusted là true 
 
-### Sandbox (Web Worker - Pyodide)
+Thử insert mã XSS thông qua việc sử dụng thuộc tính `dangerouslySetInnerHTML` để hiển thị kết quả HTML từ các cell của notebook:
+
+```python
+from IPython.display import display, HTML
+
+# Payload test XSS bằng thẻ img (khi ảnh lỗi sẽ chạy alert)
+test_payload = '<img src=x onerror="alert(\'XSS')">'
+
+display(HTML(test_payload))
+
+```
+
 Tuy nhiên, tác giả đã cài đặt một cơ chế phòng thủ bên trong Web Worker (nơi thực thi Python). Mọi kết quả từ Python trả về (`execute_result` và `display_data`) đều bị ghi đè bằng một thông báo an toàn:
 
 ```javascript
@@ -32,28 +120,17 @@ const publishExecutionResult = (prompt_count, data, metadata) => {
     });
 };
 ```
-
 Cơ chế này ngăn chặn việc in trực tiếp mã HTML/JS độc hại từ Python ra frontend.
 
 ## 3. Exploitation Strategy
 
-> **Ý tưởng cốt lõi:** Thay vì cố gắng bypass sandbox ở phía Python, ta tấn công ngay tại **điểm trung gian** — hàm `postMessage` dùng để truyền dữ liệu từ Web Worker ra ngoài. Nếu ta kiểm soát được luồng dữ liệu tại đây, ta có thể "tráo hàng" từ output hợp lệ sang payload XSS mà lớp bảo vệ của tác giả không hay biết.
+> **Ý tưởng bypass:** Ta cần tìm cách nào đó có thể thay đổi kết quả đầu ra, hoặc một cách nào đó để tác động vào hàm postMessage, một kĩ thuật có thể làm được điều này là Monkey Patching 
 
-Chuỗi tấn công diễn ra theo 3 giai đoạn liên tiếp:
+Monkey Patching là một kĩ thuật lập trình cho phép chúng ta thay đổi, tác động tới mã nguồn của class, thư viện, hoặc module trong quá trình thực thi mà không cần cập nhật tới mã nguồn gốc
 
-```
-Python (Pyodide)
-    └─► js.eval() ─► Monkey Patch self.postMessage
-                          │
-                          ▼
-              Web Worker gửi msg bị đánh tráo
-                          │
-                          ▼
-              React nhận HTML độc hại → dangerouslySetInnerHTML
-                          │
-                          ▼
-              <img onerror> kích hoạt → đánh cắp cookie bot
-```
+Về cơ bản, chúng ta có thể định nghĩa phương thức mới với hành vi khác phương thức cũ và gán phương thức mới thay thế phương thức cũ, để trong quá trình thực thi thì phương thức mới sẽ thực thi đè lên phương thức cũ
+
+Các bước để bypass và xây dựng payload như sau
 
 ### Bước 1: Monkey Patching `postMessage`
 Vì mã Python chạy trong cùng môi trường Web Worker với script bảo mật của tác giả, chúng ta có thể sử dụng thư viện `js` của Pyodide để can thiệp vào Javascript global (`self`).
@@ -68,6 +145,7 @@ Bot cấu hình cookie `flag` với domain là `localhost`. Do đó, ta phải l
 
 ## 4. Final Payload
 
+Truy cập vào webhook để lấy đường link url để "hứng" flag 
 Tạo một file `exploit.ipynb` với một cell duy nhất chứa nội dung sau:
 
 ```python
