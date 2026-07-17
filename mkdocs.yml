@@ -20,6 +20,8 @@ theme:
         icon: material/brightness-7
         name: Switch to dark mode
   features:
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
     - navigation.top
     - search.suggest
@@ -56,14 +58,26 @@ nav:
       - Bandit Level 2: ctf/overthewire/bandit-2.md
       - Bandit Level 3: ctf/overthewire/bandit-3.md
       - Bandit Level 4: ctf/overthewire/bandit-4.md
+      - Bandit Level 5: ctf/overthewire/bandit-5.md
       - Overview: ctf/overthewire/index.md
     - BoilersCTF:
       - Gas Giant: ctf/boilers/gas-giant.md
       - YAML Validator: ctf/boilers/yml.md
-    - picoCTF: ctf/picoctf/index.md
+    - picoCTF:
+      - Enhance!: ctf/picoctf/enhance.md
+      - Disk, disk, sleuth!!: ctf/picoctf/dds2.md
+      - Disk, disk, sleuth!: ctf/picoctf/dds1.md
+      - Sleuthkit Apprentice: ctf/picoctf/sleuthkit-apprentice.md
+      - Extensions: ctf/picoctf/extensions.md
+      - St3g0: ctf/picoctf/st3g0.md
+      - What Lies Within: ctf/picoctf/what-lies-within.md
+      - Overview: ctf/picoctf/index.md
     - CyberDefender: ctf/cyberdefender/index.md
   - Labs:
     - Overview: labs/index.md
+    - TryHackMe:
+      - FAT32 Analysis: labs/fat32-analysis.md
+      - Heartbleed: labs/hearbleed.md
   - About: about.md
 
 copyright: Copyright &copy; 2026 HiW7n
