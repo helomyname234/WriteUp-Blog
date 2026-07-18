@@ -23,6 +23,7 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
+    - navigation.indexes
     - navigation.top
     - search.suggest
     - search.highlight
@@ -53,17 +54,18 @@ nav:
   - Trang chủ: index.md
   - CTF Platforms:
     - OverTheWire: 
+      - ctf/overthewire/index.md
       - Bandit Level 0: ctf/overthewire/bandit-0.md
       - Bandit Level 1: ctf/overthewire/bandit-1.md
       - Bandit Level 2: ctf/overthewire/bandit-2.md
       - Bandit Level 3: ctf/overthewire/bandit-3.md
       - Bandit Level 4: ctf/overthewire/bandit-4.md
       - Bandit Level 5: ctf/overthewire/bandit-5.md
-      - Overview: ctf/overthewire/index.md
     - BoilersCTF:
       - Gas Giant: ctf/boilers/gas-giant.md
       - YAML Validator: ctf/boilers/yml.md
     - picoCTF:
+      - ctf/picoctf/index.md
       - Enhance!: ctf/picoctf/enhance.md
       - Disk, disk, sleuth!!: ctf/picoctf/dds2.md
       - Disk, disk, sleuth!: ctf/picoctf/dds1.md
@@ -71,13 +73,12 @@ nav:
       - Extensions: ctf/picoctf/extensions.md
       - St3g0: ctf/picoctf/st3g0.md
       - What Lies Within: ctf/picoctf/what-lies-within.md
-      - Overview: ctf/picoctf/index.md
     - CyberDefender: ctf/cyberdefender/index.md
   - Labs:
-    - Overview: labs/index.md
+    - labs/index.md
     - TryHackMe:
-      - FAT32 Analysis: labs/fat32-analysis.md
-      - Heartbleed: labs/hearbleed.md
+      - FAT32 Analysis: labs/tryhackme/fat32-analysis.md
+      - Heartbleed: labs/tryhackme/hearbleed.md
   - About: about.md
 
 copyright: Copyright &copy; 2026 HiW7n
