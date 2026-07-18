@@ -1,0 +1,2557 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Phòng lab và bài viết giải các thử thách CTF từ OverTheWire, picoCTF, và nhiều nền tảng khác.">
+      
+      
+        <meta name="author" content="HiW7n">
+      
+      
+      
+        <link rel="prev" href="../../">
+      
+      
+        <link rel="next" href="../hearbleed/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>FAT32 Analysis - HiW7n | CTF Writeups</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#fat32-analysis-tryhackme" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="HiW7n | CTF Writeups" class="md-header__button md-logo" aria-label="HiW7n | CTF Writeups" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            HiW7n | CTF Writeups
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              FAT32 Analysis
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Trang chủ
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../ctf/overthewire/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  CTF Platforms
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Labs
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<div class="personal-profile">
+  <img src="../../../assets/images/avatar.png" class="personal-avatar" alt="avatar">
+  <div class="personal-name">HiW7n</div>
+  <div class="personal-bio">Đam mê học hỏi về Cybersecurity, CTF Player & Lab Explorer. Đây là nơi mình ghi lại hành trình chinh phục các thử thách bảo mật.</div>
+</div>
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trang chủ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../ctf/cyberdefender/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CTF Platforms
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CTF Platforms
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../ctf/overthewire/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OverTheWire
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_1" id="__nav_2_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    OverTheWire
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/overthewire/bandit-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bandit Level 0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/overthewire/bandit-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bandit Level 1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/overthewire/bandit-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bandit Level 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/overthewire/bandit-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bandit Level 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/overthewire/bandit-4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bandit Level 4
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/overthewire/bandit-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bandit Level 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    BoilersCTF
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    BoilersCTF
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/boilers/gas-giant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gas Giant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/boilers/yml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    YAML Validator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../ctf/picoctf/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    picoCTF
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    picoCTF
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/picoctf/enhance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Enhance!
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/picoctf/dds2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disk, disk, sleuth!!
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/picoctf/dds1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disk, disk, sleuth!
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/picoctf/sleuthkit-apprentice.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sleuthkit Apprentice
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/picoctf/extensions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extensions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/picoctf/st3g0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    St3g0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ctf/picoctf/what-lies-within/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What Lies Within
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Labs
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Labs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TryHackMe
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    TryHackMe
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAT32 Analysis
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAT32 Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-thong-tin-phong-lab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Thông tin phòng lab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Thông tin phòng lab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mo-ta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mô tả
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-kien-thuc-nen-cau-truc-fat32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Kiến thức nền: Cấu trúc FAT32
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Kiến thức nền: Cấu trúc FAT32">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#entry-types-trong-root-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entry types trong Root Directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#byte-quan-trong-trong-sfn-entry-32-bytes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Byte quan trọng trong SFN Entry (32 bytes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-task-4-cau-truc-boot-sector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Task 4 — Cấu trúc Boot Sector
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Task 4 — Cấu trúc Boot Sector">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mo-file-anh-voi-hxd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mở file ảnh với HxD
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#offset-fat1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offset FAT1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ket-qua" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kết quả
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-task-7-phat-hien-file-thu-muc-an-t1564001" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Task 7 — Phát hiện File &amp; Thư mục Ẩn (T1564.001)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Task 7 — Phát hiện File &amp; Thư mục Ẩn (T1564.001)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nguyen-ly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nguyên lý
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phan-tich-thu-cong-voi-hxd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phân tích thủ công với HxD
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phan-tich-tu-ong-voi-autopsy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phân tích tự động với Autopsy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ket-qua_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kết quả
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-task-8-phat-hien-time-stomping-t1070" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Task 8 — Phát hiện Time Stomping (T1070)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Task 8 — Phát hiện Time Stomping (T1070)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nguyen-ly_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nguyên lý
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phan-tich-thu-cong-voi-hxd_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phân tích thủ công với HxD
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phan-tich-tu-ong-voi-autopsy_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phân tích tự động với Autopsy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ket-qua_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kết quả
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-task-9-phuc-hoi-file-a-xoa-t1070004" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Task 9 — Phục hồi File Đã Xóa (T1070.004)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Task 9 — Phục hồi File Đã Xóa (T1070.004)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nguyen-ly_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nguyên lý
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phan-tich-thu-cong-voi-hxd_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phân tích thủ công với HxD
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phan-tich-tu-ong-voi-autopsy_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phân tích tự động với Autopsy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ket-qua_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kết quả
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-task-10-challenge-tong-hop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Task 10 — Challenge Tổng Hợp
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Task 10 — Challenge Tổng Hợp">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ket-qua_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kết quả
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-tong-ket-key-takeaways" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Tổng kết (Key Takeaways)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hearbleed/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Heartbleed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cryptosystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cryptosystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-thong-tin-phong-lab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Thông tin phòng lab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Thông tin phòng lab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mo-ta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mô tả
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-kien-thuc-nen-cau-truc-fat32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Kiến thức nền: Cấu trúc FAT32
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Kiến thức nền: Cấu trúc FAT32">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#entry-types-trong-root-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entry types trong Root Directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#byte-quan-trong-trong-sfn-entry-32-bytes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Byte quan trọng trong SFN Entry (32 bytes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-task-4-cau-truc-boot-sector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Task 4 — Cấu trúc Boot Sector
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Task 4 — Cấu trúc Boot Sector">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mo-file-anh-voi-hxd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mở file ảnh với HxD
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#offset-fat1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offset FAT1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ket-qua" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kết quả
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-task-7-phat-hien-file-thu-muc-an-t1564001" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Task 7 — Phát hiện File &amp; Thư mục Ẩn (T1564.001)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Task 7 — Phát hiện File &amp; Thư mục Ẩn (T1564.001)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nguyen-ly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nguyên lý
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phan-tich-thu-cong-voi-hxd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phân tích thủ công với HxD
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phan-tich-tu-ong-voi-autopsy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phân tích tự động với Autopsy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ket-qua_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kết quả
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-task-8-phat-hien-time-stomping-t1070" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Task 8 — Phát hiện Time Stomping (T1070)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Task 8 — Phát hiện Time Stomping (T1070)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nguyen-ly_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nguyên lý
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phan-tich-thu-cong-voi-hxd_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phân tích thủ công với HxD
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phan-tich-tu-ong-voi-autopsy_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phân tích tự động với Autopsy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ket-qua_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kết quả
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-task-9-phuc-hoi-file-a-xoa-t1070004" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Task 9 — Phục hồi File Đã Xóa (T1070.004)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Task 9 — Phục hồi File Đã Xóa (T1070.004)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nguyen-ly_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nguyên lý
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phan-tich-thu-cong-voi-hxd_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phân tích thủ công với HxD
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phan-tich-tu-ong-voi-autopsy_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phân tích tự động với Autopsy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ket-qua_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kết quả
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-task-10-challenge-tong-hop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Task 10 — Challenge Tổng Hợp
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Task 10 — Challenge Tổng Hợp">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ket-qua_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kết quả
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-tong-ket-key-takeaways" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Tổng kết (Key Takeaways)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="fat32-analysis-tryhackme">FAT32 Analysis - TryHackMe</h1>
+<h2 id="1-thong-tin-phong-lab">1. Thông tin phòng lab</h2>
+<ul>
+<li><strong>Link:</strong> <a href="https://tryhackme.com/room/fat32analysis">FAT32 Analysis (TryHackMe)</a></li>
+<li><strong>Category:</strong> Digital Forensics</li>
+<li><strong>Difficulty:</strong> Hard</li>
+<li><strong>Time:</strong> ~90 phút</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Thông tin</th>
+<th style="text-align: left;">Giá trị</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Platform</strong></td>
+<td style="text-align: left;">TryHackMe</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Tags</strong></td>
+<td style="text-align: left;"><code>forensics</code>, <code>FAT32</code>, <code>filesystem</code>, <code>Autopsy</code>, <code>HxD</code>, <code>deleted-files</code>, <code>timestomping</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="mo-ta">Mô tả</h3>
+<blockquote>
+<p>Examine the FAT32 filesystem from a forensic point of view.</p>
+</blockquote>
+<p><strong>Mục tiêu học:</strong>
+- Khám phá cấu trúc của filesystem FAT32
+- Áp dụng kỹ thuật phân tích pháp y số trên FAT32
+- Phục hồi dữ liệu bị xóa từ FAT32
+- Phát hiện kỹ thuật defense evasion liên quan đến FAT32</p>
+<p><strong>Công cụ sử dụng:</strong> <code>HxD</code> (hex editor), <code>Autopsy</code> (forensics tool)</p>
+<hr />
+<h2 id="2-kien-thuc-nen-cau-truc-fat32">2. Kiến thức nền: Cấu trúc FAT32</h2>
+<p>FAT32 gồm 3 vùng chính:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│         RESERVED AREA           │  ← Sector 0: Boot Sector (metadata phân vùng)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  Boot Sector | FSinfo | Backup  │     Sector 1: FSinfo Sector
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├─────────────────────────────────┤
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│            FAT AREA             │  ← FAT1: bảng theo dõi cluster
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│       FAT1  |  FAT2 (backup)    │     FAT2: bản sao dự phòng
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>├─────────────────────────────────┤
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│           DATA AREA             │  ← Root Directory: index LFN + SFN entries
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│  Root Directory | Data Region   │     Data Region: nội dung file thực tế
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>└─────────────────────────────────┘
+</code></pre></div>
+<h3 id="entry-types-trong-root-directory">Entry types trong Root Directory</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Loại</th>
+<th style="text-align: left;">Mô tả</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>LFN</strong> (Long File Name)</td>
+<td style="text-align: left;">Lưu tên file đầy đủ (hỗ trợ Unicode, tên dài)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>SFN</strong> (Short File Name)</td>
+<td style="text-align: left;">Lưu metadata: tên 8.3, attributes, timestamps, cluster bắt đầu, kích thước</td>
+</tr>
+</tbody>
+</table>
+<h3 id="byte-quan-trong-trong-sfn-entry-32-bytes">Byte quan trọng trong SFN Entry (32 bytes)</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Offset</th>
+<th style="text-align: left;">Kích thước</th>
+<th style="text-align: left;">Ý nghĩa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>0x00</code></td>
+<td style="text-align: left;">8 bytes</td>
+<td style="text-align: left;">Tên file (Short)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>0x08</code></td>
+<td style="text-align: left;">3 bytes</td>
+<td style="text-align: left;">Extension</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>0x0B</code></td>
+<td style="text-align: left;">1 byte</td>
+<td style="text-align: left;"><strong>Attributes</strong> (<code>0x02</code> = Hidden, <code>0x10</code> = Directory...)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>0x0E</code></td>
+<td style="text-align: left;">2 bytes</td>
+<td style="text-align: left;">Creation Time</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>0x10</code></td>
+<td style="text-align: left;">2 bytes</td>
+<td style="text-align: left;">Creation Date</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>0x12</code></td>
+<td style="text-align: left;">2 bytes</td>
+<td style="text-align: left;">Last Access Date</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>0x16</code></td>
+<td style="text-align: left;">2 bytes</td>
+<td style="text-align: left;">Last Modified Time</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>0x18</code></td>
+<td style="text-align: left;">2 bytes</td>
+<td style="text-align: left;">Last Modified Date</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>0x1A</code></td>
+<td style="text-align: left;">2 bytes</td>
+<td style="text-align: left;">First Cluster (Low Word)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>0x1C</code></td>
+<td style="text-align: left;">4 bytes</td>
+<td style="text-align: left;">File Size</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>⚠️ FAT32 sử dụng <strong>Little Endian</strong>: đọc bytes từ phải sang trái khi tính giá trị.</p>
+</blockquote>
+<hr />
+<h2 id="3-task-4-cau-truc-boot-sector">3. Task 4 — Cấu trúc Boot Sector</h2>
+<h3 id="mo-file-anh-voi-hxd">Mở file ảnh với HxD</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>File → Open → C:\FAT32_analysis\FAT32_structure.001
+</code></pre></div>
+<p>Điều hướng đến offset bằng <code>CTRL+G</code>.</p>
+<h3 id="offset-fat1">Offset FAT1</h3>
+<p>FAT1 bắt đầu tại: <code>Reserved Sectors × 512 bytes</code> (chuyển sang hex)</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>FAT1 offset = Reserved Sectors × 512 = ?
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>FAT2 offset = (Reserved Sectors + Sectors per FAT) × 512 = ?
+</code></pre></div>
+<h3 id="ket-qua">Kết quả</h3>
+<!-- ![Boot sector HxD](../../assets/images/labs/fat32/boot_sector.png) -->
+
+<p><strong>(Q) At which offset does the FAT2 table start?</strong></p>
+<blockquote>
+<p><code>Answer:</code> <em>(điền sau khi làm)</em></p>
+</blockquote>
+<hr />
+<h2 id="4-task-7-phat-hien-file-thu-muc-an-t1564001">4. Task 7 — Phát hiện File &amp; Thư mục Ẩn (T1564.001)</h2>
+<h3 id="nguyen-ly">Nguyên lý</h3>
+<p>File/directory bị ẩn khi byte <code>0x0B</code> trong SFN entry = <code>0x02</code> (Hidden attribute).</p>
+<h3 id="phan-tich-thu-cong-voi-hxd">Phân tích thủ công với HxD</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>File → Open → C:\FAT32_analysis\FAT32_HIDDEN.001
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>CTRL+G → 00400000  (Root Directory)
+</code></pre></div>
+<p>Kiểm tra từng cluster: <code>00400000</code>, <code>00400200</code>, <code>00400600</code></p>
+<!-- ![Hidden files HxD](../../assets/images/labs/fat32/hidden_hxd.png) -->
+
+<h3 id="phan-tich-tu-ong-voi-autopsy">Phân tích tự động với Autopsy</h3>
+<ol>
+<li><strong>New Case:</strong> <code>FAT32_HIDDEN</code> — Base Dir: <code>C:\FAT32_analysis\</code></li>
+<li><strong>Add Data Source:</strong> <code>C:\FAT32_analysis\FAT32_HIDDEN.001</code></li>
+<li><strong>Ingest Modules:</strong> chọn <code>Recent Activity</code> + <code>File Type Identification</code></li>
+<li>Duyệt <strong>Data Sources → FAT32_HIDDEN.001</strong> để xem file ẩn</li>
+</ol>
+<!-- ![Autopsy hidden files](../../assets/images/labs/fat32/hidden_autopsy.png) -->
+
+<h3 id="ket-qua_1">Kết quả</h3>
+<p>Thư mục ẩn tìm được: <code>M@lL0v3</code>
+File ẩn bên trong: <code>BeMyValent1ne.txt</code> (kích thước 23 bytes)</p>
+<p><strong>(Q1) What is the short file name of the hidden file in the M@lL0v3 directory?</strong></p>
+<blockquote>
+<p><code>Answer:</code> <em>(điền sau khi làm)</em></p>
+</blockquote>
+<p><strong>(Q2) What is the flag found during automated analysis?</strong></p>
+<blockquote>
+<p><code>Answer:</code> <em>(điền sau khi làm)</em></p>
+</blockquote>
+<hr />
+<h2 id="5-task-8-phat-hien-time-stomping-t1070">5. Task 8 — Phát hiện Time Stomping (T1070)</h2>
+<h3 id="nguyen-ly_1">Nguyên lý</h3>
+<p>Kẻ tấn công thay đổi timestamp để che giấu dấu vết. Dấu hiệu bất thường:
+- <strong>Creation time &gt; Last Modified time</strong> (file được tạo sau khi đã sửa?)
+- <strong>Last Access time &lt; Modified time</strong> (truy cập trước khi sửa?)
+- Timestamp quá cũ/mới so với các file xung quanh</p>
+<h3 id="phan-tich-thu-cong-voi-hxd_1">Phân tích thủ công với HxD</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>File → Open → C:\FAT32_analysis\FAT32_TIMESTOMP.001
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>CTRL+G → 00400000  (Root Directory)
+</code></pre></div>
+<p>Lấy tất cả SFN entries và so sánh timestamps giữa các file.</p>
+<h3 id="phan-tich-tu-ong-voi-autopsy_1">Phân tích tự động với Autopsy</h3>
+<ol>
+<li>Load <code>FAT32_TIMESTOMP.001</code> làm Data Source</li>
+<li>Vào <strong>Timeline</strong> (trên toolbar)</li>
+<li>Điều chỉnh date range và đặt Scale = <code>Linear</code></li>
+<li>Click vào các thanh năm bất thường (ví dụ: 2018) để xem chi tiết</li>
+</ol>
+<!-- ![Autopsy timeline](../../assets/images/labs/fat32/timestomp_timeline.png) -->
+
+<h3 id="ket-qua_2">Kết quả</h3>
+<p>File có timestamp bất thường: <code>install.txt</code> — có <em>Accessed timestamp</em> mà không có <em>Creation timestamp</em> trước đó.</p>
+<p><strong>(Q1) What is the Accessed timestamp of the discovered suspicious file?</strong></p>
+<blockquote>
+<p><code>Answer:</code> <em>(điền sau khi làm)</em></p>
+</blockquote>
+<p><strong>(Q2) What is the flag found during the automated analysis?</strong></p>
+<blockquote>
+<p><code>Answer:</code> <em>(điền sau khi làm)</em></p>
+</blockquote>
+<hr />
+<h2 id="6-task-9-phuc-hoi-file-a-xoa-t1070004">6. Task 9 — Phục hồi File Đã Xóa (T1070.004)</h2>
+<h3 id="nguyen-ly_2">Nguyên lý</h3>
+<p>Trong FAT32, xóa file <strong>không xóa dữ liệu thực tế trên disk</strong>. Chỉ:
+- Byte đầu tiên của <strong>SFN entry</strong> bị thay bằng <code>0xE5</code> (đánh dấu "deleted")
+- FAT entries tương ứng bị đặt về <code>0x00</code> (free cluster)</p>
+<p>→ Dữ liệu vẫn nằm nguyên trong data region cho đến khi bị ghi đè.</p>
+<h3 id="phan-tich-thu-cong-voi-hxd_2">Phân tích thủ công với HxD</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>File → Open → C:\FAT32_analysis\FAT32_DELETED.001
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>CTRL+G → 00400000  (Root Directory)
+</code></pre></div>
+<p>Tìm SFN entry bắt đầu bằng <code>E5</code> → đọc first cluster → nhảy đến offset tương ứng để đọc nội dung.</p>
+<h3 id="phan-tich-tu-ong-voi-autopsy_2">Phân tích tự động với Autopsy</h3>
+<ol>
+<li>Load <code>FAT32_DELETED.001</code> làm Data Source</li>
+<li>Duyệt root directory — file bị xóa sẽ được hiển thị với biểu tượng đặc biệt</li>
+<li>Kiểm tra thêm thư mục <code>$RECYCLE.BIN</code></li>
+<li>Click chuột phải → <strong>Extract File(s)</strong> để lưu file phục hồi</li>
+</ol>
+<!-- ![Autopsy deleted file](../../assets/images/labs/fat32/deleted_autopsy.png) -->
+
+<h3 id="ket-qua_3">Kết quả</h3>
+<p>File bị xóa: <code>CstrikePers.ps1</code> (PowerShell script)</p>
+<p><strong>(Q1) Which hexadecimal sequence identifies a deleted file?</strong></p>
+<blockquote>
+<p><code>Answer:</code> <code>E5</code></p>
+</blockquote>
+<p><strong>(Q2) What is the output of the deleted PowerShell script after executing it?</strong></p>
+<blockquote>
+<p><code>Answer:</code> <em>(điền sau khi làm)</em></p>
+</blockquote>
+<hr />
+<h2 id="7-task-10-challenge-tong-hop">7. Task 10 — Challenge Tổng Hợp</h2>
+<p><strong>Image:</strong> <code>C:\FAT32_analysis\FAT32_CHALLENGE.001</code></p>
+<p>Áp dụng tổng hợp các kỹ năng đã học:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Câu hỏi</th>
+<th style="text-align: left;">Kỹ năng cần</th>
+<th style="text-align: left;">Gợi ý</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">FAT1 offset?</td>
+<td style="text-align: left;">Boot Sector Analysis</td>
+<td style="text-align: left;"><code>Reserved Sectors × 512</code> → hex</td>
+</tr>
+<tr>
+<td style="text-align: left;">Tên thư mục ẩn?</td>
+<td style="text-align: left;">Hidden File Detection</td>
+<td style="text-align: left;">Attr byte <code>0x02</code> trong SFN</td>
+</tr>
+<tr>
+<td style="text-align: left;">Flag trong thư mục ẩn?</td>
+<td style="text-align: left;">Data Recovery</td>
+<td style="text-align: left;">Đọc nội dung file trong thư mục đó</td>
+</tr>
+<tr>
+<td style="text-align: left;">Kích thước file archive?</td>
+<td style="text-align: left;">SFN Analysis</td>
+<td style="text-align: left;">Byte <code>0x1C</code> của SFN entry</td>
+</tr>
+<tr>
+<td style="text-align: left;">Tên file đã xóa?</td>
+<td style="text-align: left;">Deleted File Detection</td>
+<td style="text-align: left;">Tìm SFN entry bắt đầu <code>E5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Flag trong file đã xóa?</td>
+<td style="text-align: left;">Data Recovery</td>
+<td style="text-align: left;">Đọc cluster từ SFN</td>
+</tr>
+<tr>
+<td style="text-align: left;">File có timestamp bất thường?</td>
+<td style="text-align: left;">Timeline Analysis</td>
+<td style="text-align: left;">Autopsy Timeline</td>
+</tr>
+<tr>
+<td style="text-align: left;">Flag trong file đó?</td>
+<td style="text-align: left;">Data Extraction</td>
+<td style="text-align: left;">Đọc nội dung file</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ket-qua_4">Kết quả</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Câu hỏi</th>
+<th style="text-align: left;">Đáp án</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">FAT1 offset</td>
+<td style="text-align: left;"><em>(điền sau khi làm)</em></td>
+</tr>
+<tr>
+<td style="text-align: left;">Tên thư mục ẩn</td>
+<td style="text-align: left;"><em>(điền sau khi làm)</em></td>
+</tr>
+<tr>
+<td style="text-align: left;">Flag trong thư mục ẩn</td>
+<td style="text-align: left;"><em>(điền sau khi làm)</em></td>
+</tr>
+<tr>
+<td style="text-align: left;">Kích thước file archive</td>
+<td style="text-align: left;"><em>(điền sau khi làm)</em></td>
+</tr>
+<tr>
+<td style="text-align: left;">Tên file đã xóa</td>
+<td style="text-align: left;"><em>(điền sau khi làm)</em></td>
+</tr>
+<tr>
+<td style="text-align: left;">Flag trong file đã xóa</td>
+<td style="text-align: left;"><em>(điền sau khi làm)</em></td>
+</tr>
+<tr>
+<td style="text-align: left;">File timestamp bất thường</td>
+<td style="text-align: left;"><em>(điền sau khi làm)</em></td>
+</tr>
+<tr>
+<td style="text-align: left;">Flag trong file đó</td>
+<td style="text-align: left;"><em>(điền sau khi làm)</em></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-tong-ket-key-takeaways">8. Tổng kết (Key Takeaways)</h2>
+<ul>
+<li><strong>FAT32 = 3 vùng</strong>: Reserved (boot metadata) → FAT (cluster map) → Data (root dir + content)</li>
+<li><strong>SFN entry = 32 bytes</strong>: chứa toàn bộ metadata của file — attribute, timestamps, first cluster, size</li>
+<li><strong>File ẩn</strong>: Attributes byte <code>0x0B</code> = <code>0x02</code> — không bị xóa, vẫn đọc được bình thường</li>
+<li><strong>File bị xóa</strong>: SFN byte đầu = <code>0xE5</code> — dữ liệu vẫn còn trên disk cho đến khi bị ghi đè</li>
+<li><strong>Time Stomping</strong>: phát hiện qua inconsistency trong timestamps (creation &gt; modified, accessed &lt; modified)</li>
+<li><strong>Autopsy</strong> giúp tự động hóa phần lớn quá trình phân tích, đặc biệt là Timeline cho time stomping</li>
+<li><strong>Little Endian</strong>: luôn nhớ đảo byte order khi đọc giá trị multi-byte từ HxD</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 HiW7n
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
