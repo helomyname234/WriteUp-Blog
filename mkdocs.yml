@@ -79,6 +79,7 @@ nav:
     - TryHackMe:
       - FAT32 Analysis: labs/tryhackme/fat32-analysis.md
       - Heartbleed: labs/tryhackme/hearbleed.md
+      - Cryptosystem: labs/tryhackme/cryptosystem.md
   - About: about.md
 
 copyright: Copyright &copy; 2026 HiW7n

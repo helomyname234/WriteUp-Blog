@@ -26,21 +26,19 @@
 
 ## 2. Phân tích lỗ hổng RSA (Fermat's Factorization)
 
-Thuật toán mã hóa RSA dựa trên độ khó của việc phân tích một số nguyên lớn $n$ thành tích của hai số nguyên tố bí mật ($p$ và $q$). Nếu kẻ tấn công có thể phân tích được $n = p \times q$, họ có thể dễ dàng tính toán được khóa bí mật $d$ và giải mã thông điệp.
+Thuật toán mã hóa RSA dựa trên độ khó của việc phân tích một số nguyên lớn `n` thành tích của hai số nguyên tố bí mật (`p` và `q`). Nếu kẻ tấn công có thể phân tích được `n = p * q`, họ có thể dễ dàng tính toán được khóa bí mật `d` và giải mã thông điệp.
 
-Trong bài lab này, chúng ta được cung cấp Public Key bao gồm modulus $n$ và số mũ công khai $e$, cùng với bản mã $c$.
+Trong bài lab này, chúng ta được cung cấp Public Key bao gồm modulus `n` và số mũ công khai `e`, cùng với bản mã `c`.
 
-Thông thường, việc phân tích thừa số nguyên tố cho một số $n$ rất lớn là điều bất khả thi trong thời gian thực. Tuy nhiên, trong một số trường hợp cấu hình sai, nếu hai số nguyên tố $p$ và $q$ được sinh ra **quá gần nhau**, thì giá trị của chúng sẽ xấp xỉ bằng căn bậc hai của $n$:
-$$p \approx \sqrt{n}$$
-$$q \approx \sqrt{n}$$
+Thông thường, việc phân tích thừa số nguyên tố cho một số `n` rất lớn là điều bất khả thi trong thời gian thực. Tuy nhiên, trong một số trường hợp cấu hình sai, nếu hai số nguyên tố `p` và `q` được sinh ra **quá gần nhau**, thì giá trị của chúng sẽ xấp xỉ bằng căn bậc hai của `n`
 
-Lợi dụng điểm yếu này, chúng ta có thể dễ dàng tìm ra $p$ và $q$ bằng cách tính căn bậc hai phần nguyên của $n$. Gọi giá trị căn bậc hai phần nguyên này là $r$. Số nguyên tố $p$ sẽ là số nguyên tố gần nhất nhỏ hơn hoặc bằng $r$, và $q$ sẽ là số nguyên tố gần nhất lớn hơn hoặc bằng $r$.
+Lợi dụng điểm yếu này, chúng ta có thể dễ dàng tìm ra `p` và `q` bằng cách tính căn bậc hai phần nguyên của `n`. Gọi giá trị căn bậc hai phần nguyên này là `r`. Số nguyên tố `p` sẽ là số nguyên tố gần nhất nhỏ hơn hoặc bằng `r`, và `q` sẽ là số nguyên tố gần nhất lớn hơn hoặc bằng `r`.
 
 ---
 
 ## 3. Khai thác (Exploitation)
 
-Sử dụng thư viện `pycryptodome` trong Python, chúng ta có thể viết một đoạn script nhỏ để tự động tìm $p$, $q$ dựa trên ý tưởng trên. Khi đã có $p$ và $q$, việc tính toán $\phi(n)$ và sinh ra khóa bí mật $d$ để giải mã bản mã $c$ là hoàn toàn đơn giản.
+Sử dụng thư viện `pycryptodome` trong Python, chúng ta có thể viết một đoạn script nhỏ để tự động tìm `p`, `q` dựa trên ý tưởng trên. Khi đã có `p` và `q`, việc tính toán `phi(n)` và sinh ra khóa bí mật `d` để giải mã bản mã `c` là hoàn toàn đơn giản.
 
 Đoạn code giải mã (`task.py`):
 
