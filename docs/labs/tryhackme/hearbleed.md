@@ -93,7 +93,7 @@ Vậy là chúng ta đã hiểu lí thuyết về lỗ hỗng Heartbleed. Bướ
 
 Chúng ta dùng nmap để kiểm tra các port đang mở của target host
 
-![alt text](../assets/images/ctf/labs/heartbleed/nmap_scan.png)
+![alt text](../../assets/images/ctf/labs/heartbleed/nmap_scan.png)
 
 Port 443 đang mở, có OpenSSl đang chạy, đây chính là mục tiêu, chúng ta sẽ cần thực hiện các bước sau:
 
@@ -132,4 +132,4 @@ Vì Source code PoC này viết bằng python phiên bản cũ 2.x, khi chạy t
 
 Sau khi fix lại chúng ta sẽ nhận được kết quả. Mình sẽ không để trực tiếp flag ở đây, hi vọng các bạn sẽ tự làm thành công
 
-![alt text](../assets/images/ctf/labs/heartbleed/res.png)
+![alt text](../../assets/images/ctf/labs/heartbleed/res.png)
